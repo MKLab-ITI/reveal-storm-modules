@@ -36,6 +36,7 @@ public class IndexingController {
 
     private synchronized static IndexingController ensureInstance() throws IllegalStateException {
         if (singletonInstance == null) {
+            Configuration.loadConfiguration(Configuration.CONF.LOCAL);
             singletonInstance = new IndexingController();
         }
         return singletonInstance;

@@ -6,6 +6,8 @@ import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
+import gr.iti.mklab.conf.FieldNames;
+import gr.iti.mklab.simmo.items.Image;
 import gr.iti.mklab.visual.IndexingController;
 
 import java.util.Map;
@@ -20,7 +22,7 @@ public class IndexingBolt extends BaseRichBolt {
     private OutputCollector outputCollector;
 
     public IndexingBolt() {
-        IndexingController.initialize();
+        //IndexingController.initialize();
     }
 
     @Override
@@ -30,9 +32,10 @@ public class IndexingBolt extends BaseRichBolt {
 
     @Override
     public void execute(Tuple tuple) {
-        String url = "";
-        String collection = "";
-        boolean indexed = IndexingController.indexImage(url, collection);
+        Image img = (Image) tuple.getValueByField(FieldNames.IMAGE);
+        String url = img.getUrl();
+        boolean indexed = IndexingController.indexImage(img.getUrl(), "test");
+        System.out.println("Image "+url+"has been indexed "+indexed);
         //outputCollector.emit((Object)indexed);
     }
 
