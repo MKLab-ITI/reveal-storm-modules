@@ -7,7 +7,9 @@ import backtype.storm.generated.StormTopology;
 import backtype.storm.testing.*;
 import backtype.storm.topology.TopologyBuilder;
 import gr.iti.mklab.bolts.IndexingBolt;
+import gr.iti.mklab.conf.Configuration;
 import gr.iti.mklab.spouts.MongoSpout;
+import gr.iti.mklab.visual.VisualIndexer;
 import junit.framework.TestCase;
 
 import java.util.Map;
@@ -17,7 +19,10 @@ import java.util.Map;
  */
 public class VisualTest extends TestCase {
 
-    public void testIndexingTopology() {
+    //The test will fail because of a timeout. It takes longer than the hard-coded timeout of 5000ms
+    public void testIndexingTopology() throws Exception {
+        Configuration.load("local.properties");
+        VisualIndexer.init();
         MkClusterParam mkClusterParam = new MkClusterParam();
         mkClusterParam.setSupervisors(4);
         Config daemonConf = new Config();
@@ -28,11 +33,10 @@ public class VisualTest extends TestCase {
 
             // build the test topology
             TopologyBuilder builder = new TopologyBuilder();
-            builder.setSpout("MongoSpout", new MongoSpout("127.0.0.1", "test", 1000));
-            builder.setBolt("IndexingBolt", new IndexingBolt());
+            builder.setSpout("MongoSpout", new MongoSpout(Configuration.MONGO_HOST, "wtf5wtf", 100));
+            builder.setBolt("IndexingBolt", new IndexingBolt("newcol")).shuffleGrouping("MongoSpout");
 
             StormTopology topology = builder.createTopology();
-
 
             Config conf = new Config();
             conf.setNumWorkers(2);

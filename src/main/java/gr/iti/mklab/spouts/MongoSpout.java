@@ -6,6 +6,7 @@ import backtype.storm.testing.CompletableSpout;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseRichSpout;
 import backtype.storm.tuple.Fields;
+import gr.iti.mklab.conf.FieldNames;
 import gr.iti.mklab.simmo.items.Image;
 import gr.iti.mklab.simmo.morphia.MediaDAO;
 import gr.iti.mklab.simmo.morphia.MorphiaManager;
@@ -35,20 +36,20 @@ public class MongoSpout extends BaseRichSpout implements CompletableSpout {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declare(new Fields(DB_NAME));
+        outputFieldsDeclarer.declare(new Fields(FieldNames.IMAGE));
     }
 
     @Override
     public void open(Map map, TopologyContext topologyContext, SpoutOutputCollector spoutOutputCollector) {
         this.collector = spoutOutputCollector;
-        MediaDAO<Image> dao = new MediaDAO<>(Image.class, "test");
+        MediaDAO<Image> dao = new MediaDAO<>(Image.class, DB_NAME);
         it = dao.getItems(NUM_ITEMS, 0).iterator();
     }
 
     @Override
     public void nextTuple() {
         if (it.hasNext())
-            collector.emit(tuple(it.next()));
+            collector.emit(tuple(it.next().getUrl()));
         else
             this.close();
     }

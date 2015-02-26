@@ -1,45 +1,33 @@
 package gr.iti.mklab.conf;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
+
+import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.PropertiesConfiguration;
+
 /**
  * Created by kandreadou on 2/3/15.
  */
 public class Configuration {
 
-    public static enum CONF {
-        LOCAL, ITI310, DOCKER
-    }
-
     public static String LEARNING_FOLDER;
-    public static String INDEX_FOLDER;
-    public static String SCRIPTS_FOLDER;
-    public static String CRAWLS_FOLDER;
+    public static String INDEX_SERVICE_HOST;
+    public static String MONGO_HOST;
 
-    public static int INDEX_SIZE = 100000; //100 thousand
-
-    public static void main(String[] args) throws Exception {
-        Configuration c = new Configuration();
-        c.loadConfiguration(CONF.ITI310);
+    public static void load(String file) throws ConfigurationException {
+        PropertiesConfiguration conf = new PropertiesConfiguration(file);
+        LEARNING_FOLDER = conf.getString("learningFolder");
+        INDEX_SERVICE_HOST = conf.getString("indexServiceHost");
+        MONGO_HOST = conf.getString("mongoHost");
     }
 
-    public static void loadConfiguration(CONF conf) {
-        switch (conf) {
-            case LOCAL:
-                LEARNING_FOLDER = "/home/kandreadou/webservice/learning_files/";
-                INDEX_FOLDER = "/home/kandreadou/webservice/reveal_indices/";
-                break;
-            case ITI310:
-                LEARNING_FOLDER = "/home/iti-310/VisualIndex/learning_files/";
-                INDEX_FOLDER = "/home/iti-310/VisualIndex/data/";
-                SCRIPTS_FOLDER = "/home/iti-310/vdata/";
-                CRAWLS_FOLDER = "/home/iti-310/VisualIndex/data/";
-                break;
-            case DOCKER:
-                LEARNING_FOLDER = "/usr/learning_files/";
-                INDEX_FOLDER = "/usr/visual/";
-                SCRIPTS_FOLDER = "/usr/bubing/";
-                CRAWLS_FOLDER = "/usr/crawls/";
-                break;
-        }
-
+    public static void load(InputStream stream) throws ConfigurationException, IOException {
+        Properties conf = new Properties();
+        conf.load(stream);
+        LEARNING_FOLDER = conf.getProperty("learningFolder");
+        INDEX_SERVICE_HOST = conf.getProperty("indexServiceHost");
+        MONGO_HOST = conf.getProperty("mongoHost");
     }
 }

@@ -6,4 +6,5 @@ package gr.iti.mklab.conf;
 public class FieldNames {
 
     public final static String IMAGE = "Image";
+    public final static String INDEXED = "Indexed";
 }
