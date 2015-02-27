@@ -7,11 +7,14 @@ import backtype.storm.generated.StormTopology;
 import backtype.storm.testing.*;
 import backtype.storm.topology.TopologyBuilder;
 import gr.iti.mklab.bolts.IndexingBolt;
+import gr.iti.mklab.bolts.PrintingBolt;
 import gr.iti.mklab.conf.Configuration;
+import gr.iti.mklab.spouts.JsonSpout;
 import gr.iti.mklab.spouts.MongoSpout;
 import gr.iti.mklab.visual.VisualIndexer;
 import junit.framework.TestCase;
 
+import java.io.InputStream;
 import java.util.Map;
 
 /**
@@ -33,8 +36,10 @@ public class VisualTest extends TestCase {
 
             // build the test topology
             TopologyBuilder builder = new TopologyBuilder();
-            builder.setSpout("MongoSpout", new MongoSpout(Configuration.MONGO_HOST, "wtf5wtf", 100));
-            builder.setBolt("IndexingBolt", new IndexingBolt("newcol")).shuffleGrouping("MongoSpout");
+            //builder.setSpout("MongoSpout", new MongoSpout(Configuration.MONGO_HOST, "wtf5wtf", 100));
+            builder.setSpout("JsonSpout", new JsonSpout());
+            builder.setBolt("IndexingBolt", new IndexingBolt("newcol")).shuffleGrouping("JsonSpout");
+            builder.setBolt("PrintingBolt", new PrintingBolt("/home/kandreadou/Pictures/")).shuffleGrouping("IndexingBolt");
 
             StormTopology topology = builder.createTopology();
 
