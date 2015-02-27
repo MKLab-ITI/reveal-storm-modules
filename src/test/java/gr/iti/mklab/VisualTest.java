@@ -8,6 +8,7 @@ import backtype.storm.testing.*;
 import backtype.storm.topology.TopologyBuilder;
 import gr.iti.mklab.bolts.IndexingBolt;
 import gr.iti.mklab.bolts.PrintingBolt;
+import gr.iti.mklab.bolts.SimilarityBolt;
 import gr.iti.mklab.conf.Configuration;
 import gr.iti.mklab.spouts.JsonSpout;
 import gr.iti.mklab.spouts.MongoSpout;
@@ -34,14 +35,7 @@ public class VisualTest extends TestCase {
 
         Testing.withSimulatedTimeLocalCluster(mkClusterParam, (ILocalCluster cluster) -> {
 
-            // build the test topology
-            TopologyBuilder builder = new TopologyBuilder();
-            //builder.setSpout("MongoSpout", new MongoSpout(Configuration.MONGO_HOST, "wtf5wtf", 100));
-            builder.setSpout("JsonSpout", new JsonSpout());
-            builder.setBolt("IndexingBolt", new IndexingBolt("newcol")).shuffleGrouping("JsonSpout");
-            builder.setBolt("PrintingBolt", new PrintingBolt("/home/kandreadou/Pictures/")).shuffleGrouping("IndexingBolt");
-
-            StormTopology topology = builder.createTopology();
+            StormTopology topology = getSimilarityBuilder().createTopology();
 
             Config conf = new Config();
             conf.setNumWorkers(2);
@@ -53,5 +47,22 @@ public class VisualTest extends TestCase {
                     completeTopologyParam);
 
         });
+    }
+
+    private TopologyBuilder getIndexingBuilder(){
+        TopologyBuilder builder = new TopologyBuilder();
+        //builder.setSpout("MongoSpout", new MongoSpout(Configuration.MONGO_HOST, "wtf5wtf", 100));
+        builder.setSpout("JsonSpout", new JsonSpout());
+        builder.setBolt("IndexingBolt", new IndexingBolt("newcol")).shuffleGrouping("JsonSpout");
+        builder.setBolt("PrintingBolt", new PrintingBolt("/home/kandreadou/Pictures/")).shuffleGrouping("IndexingBolt");
+        return builder;
+    }
+
+    private TopologyBuilder getSimilarityBuilder(){
+        TopologyBuilder builder = new TopologyBuilder();
+        builder.setSpout("JsonSpout", new JsonSpout());
+        builder.setBolt("SimilarityBolt", new SimilarityBolt("newcol", 0.95)).shuffleGrouping("JsonSpout");
+        builder.setBolt("PrintingBolt", new PrintingBolt("/home/kandreadou/Pictures/")).shuffleGrouping("SimilarityBolt");
+        return builder;
     }
 }

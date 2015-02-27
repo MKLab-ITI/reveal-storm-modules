@@ -151,7 +151,7 @@ public class VisualIndexer {
         return true;
     }
 
-    public List<JsonResultSet.JsonResult> findSimilar(String url, String collection, double threshold) {
+    public List<JsonResultSet.JsonResult> findSimilar(String url, double threshold) {
         List<JsonResultSet.JsonResult> results = new ArrayList<>();
         if (handler == null)
             throw new IllegalStateException("There is no index for the collection " + collection);
@@ -180,9 +180,6 @@ public class VisualIndexer {
             BufferedImage image = ImageIO.read(new ByteArrayInputStream(imageContent));
             if (image != null) {
                 ImageVectorization imvec = new ImageVectorization(url, image, targetLengthMax, maxNumPixels);
-                /*if (mediaItem.getWidth() == null && mediaItem.getHeight() == null) {
-                    mediaItem.setSize(image.getWidth(), image.getHeight());
-                }*/
                 ImageVectorizationResult imvr = imvec.call();
                 double[] vector = imvr.getImageVector();
                 if (vector == null || vector.length == 0) {
