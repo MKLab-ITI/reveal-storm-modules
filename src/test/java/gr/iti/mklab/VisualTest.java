@@ -23,19 +23,25 @@ import java.util.Map;
  */
 public class VisualTest extends TestCase {
 
-    //The test will fail because of a timeout. It takes longer than the hard-coded timeout of 5000ms
-    public void testIndexingTopology() throws Exception {
+    @Override
+    public void setUp() throws Exception {
+        super.setUp();
         Configuration.load("local.properties");
         VisualIndexer.init();
+    }
+
+    //The test will fail because of a timeout. It takes longer than the hard-coded timeout of 5000ms
+    public void testIndexingTopology() throws Exception {
+
         MkClusterParam mkClusterParam = new MkClusterParam();
         mkClusterParam.setSupervisors(4);
         Config daemonConf = new Config();
         daemonConf.put(Config.STORM_LOCAL_MODE_ZMQ, false);
         mkClusterParam.setDaemonConf(daemonConf);
 
-        Testing.withSimulatedTimeLocalCluster(mkClusterParam, (ILocalCluster cluster) -> {
+        Testing.withLocalCluster(mkClusterParam, (ILocalCluster cluster) -> {
 
-            StormTopology topology = getSimilarityBuilder().createTopology();
+            StormTopology topology = getIndexingBuilder().createTopology();
 
             Config conf = new Config();
             conf.setNumWorkers(2);
@@ -53,7 +59,7 @@ public class VisualTest extends TestCase {
         TopologyBuilder builder = new TopologyBuilder();
         //builder.setSpout("MongoSpout", new MongoSpout(Configuration.MONGO_HOST, "wtf5wtf", 100));
         builder.setSpout("JsonSpout", new JsonSpout());
-        builder.setBolt("IndexingBolt", new IndexingBolt("newcol")).shuffleGrouping("JsonSpout");
+        builder.setBolt("IndexingBolt", new IndexingBolt("newcol2")).shuffleGrouping("JsonSpout");
         builder.setBolt("PrintingBolt", new PrintingBolt("/home/kandreadou/Pictures/")).shuffleGrouping("IndexingBolt");
         return builder;
     }
