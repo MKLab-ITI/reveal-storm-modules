@@ -7,13 +7,11 @@ import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
 import gr.iti.mklab.visual.VisualIndexer;
-import itinno.common.StormLoggingHelper;
+
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import java.lang.management.ManagementFactory;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -22,60 +20,35 @@ import java.util.Map;
  * Created by kandreadou on 3/31/15.
  */
 public class CerthIndexingBolt extends BaseRichBolt {
+
     private OutputCollector collector;
     private String strExampleEmitFieldsId;
 
-    // Initialise Logger object
-    private Logger logger = null;
-    private String strLogBaseDir;
-    private String strLogPattern;
-    private Level logLevel;
-
-    static{
-        try {
-            VisualIndexer.init();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
+    private VisualIndexer indexer;
+    private String ASSESSMENT_ID;
+    private String LEARNING_FOLDER;
+    private String SERVICE_HOST;
 
     /**
      * Main Java Logger Bolt constructor
      *
      * @param strExampleEmitFieldsId id of the fields that will be emited by this bolt
-     * @param strLogBaseDir          log base directory
-     * @param logLevel               ch.qos.logback.classic.Level log level value
      * @throws Exception throws exception if log file name and/or emit field id are empty, as well as if the log level is not an instance of ch.qos.logback.classic.Level
      */
-    public CerthIndexingBolt(String strExampleEmitFieldsId, String strLogBaseDir, String strLogPattern, Level logLevel) throws Exception {
+    public CerthIndexingBolt(String strExampleEmitFieldsId, String assessmentId, String learningFolder, String serviceHost) throws Exception {
         super();
 
+        System.out.println("### CREATING CERTH INDEXING BOLT for asssesment id "+ASSESSMENT_ID+ " and configuration "+learningFolder+" "+serviceHost);
         // Store emit fields name, ExampleSocialMediaJavaLoggerBolt id and path to the main configuration file
         if (strExampleEmitFieldsId.isEmpty()) {
-            throw new Exception("Emit fields id can not be nil or emmty.");
-        }
-
-        // Check if the log file name length is more than 0
-        if (strLogBaseDir.isEmpty()) {
-            throw new Exception("Log bolt file name can not be empty,");
-        }
-
-        // Check if logging pattern is more than 0
-        if (strLogPattern.isEmpty()) {
-            throw new Exception("Logging pattern can not be empty,");
-        }
-
-        // Check if the log Level is instance of (be explicit here about the level in order to make sure that correct instance being checked)
-        if (!(logLevel instanceof Level)) {
-            throw new Exception("Log level object must be instance of the ch.qos.logback.classic.Level, but was ." + logLevel.getClass());
+            throw new Exception("Emit fields id can not be nil or empty.");
         }
 
         // After all the above checks complete, store the emit field id, path (or name) of the log file and log level
         this.strExampleEmitFieldsId = strExampleEmitFieldsId;
-        this.strLogBaseDir = strLogBaseDir;
-        this.strLogPattern = strLogPattern;
-        this.logLevel = logLevel;
+        this.ASSESSMENT_ID = assessmentId;
+        this.LEARNING_FOLDER = learningFolder;
+        this.SERVICE_HOST = serviceHost;
     }
 
 
@@ -90,50 +63,15 @@ public class CerthIndexingBolt extends BaseRichBolt {
     @Override
     public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
 
-        String strPID = null;
         this.collector = collector;
 
-        // Setup the logger
         try {
-            // Create log file name - combination of class name and current PID e.g. ExampleJavaSocialMediaStormTopologyRunner_pid123.log
-            try {
-                // Try to get the pid using java.lang.Management class and split it on @ symbol (e.g. returned value will be in the format of {p_id}@{host_name})
-                strPID = ManagementFactory.getRuntimeMXBean().getName().split("@")[0];
-
-                // Handle any possible exception here, such as if the process_name@host will not be returned (possible, depends on different JVMs)
-            } catch (Exception e) {
-                // Print the message, stacktrace and allow to continue (pid value will not be contained in the log file)
-                System.err.println("Failed to get process process id. Will continue but the log files names will not contain pid value. Details: " + e.getMessage());
-                e.printStackTrace();
-
-                // Pid will be simply an empty value
-                strPID = "";
-            }
-
-            // Create log file name - combination of class name and current process id, e.g. ExampleSocialMediaJavaLoggerBolt_pid123.log
-            String strLogName = "IndexingBolt_pid" + strPID + ".log";
-
-            // Specify the path to the log file (the file that will be created)
-            String fileSep = System.getProperty("file.separator");
-            String strLogFilePath = this.strLogBaseDir + fileSep + strLogName;
-
-            StormLoggingHelper stormLoggingHelper = new StormLoggingHelper();
-            this.logger = stormLoggingHelper.createLogger(CerthIndexingBolt.class.getName(), strLogFilePath,
-                    this.strLogPattern, this.logLevel);
-
-            // Issue test message
-            this.logger.info("Logger was initialised.");
-
+            VisualIndexer.init(LEARNING_FOLDER, SERVICE_HOST);
+            indexer = new VisualIndexer(ASSESSMENT_ID);
         } catch (Exception e) {
-            // Print error message, stacktrace and throw an exception since the log functionality is the main target of this bolt
-            System.err.printf("Error occurred during Storm Java Logger Bolt logger setup. Details: " + e.getMessage());
             e.printStackTrace();
-            try {
-                throw new Exception("Java Storm logger bolt log initialisation failed. Details: " + e.getMessage());
-            } catch (Exception e1) {
-                e1.printStackTrace();
-            }
         }
+
     }
 
 
@@ -151,22 +89,35 @@ public class CerthIndexingBolt extends BaseRichBolt {
             // Get JSON object from the HashMap from the Collections.singletonList
             JSONObject jsonObject = (JSONObject) Collections.singletonList(inputMap.get("message")).get(0);
 
-            // Since all the input will be utf-8 encoded using AMQP Storm Schema, simple get the json string message value
-            String strMessage = jsonObject.toString();
-
             // Finally log UTF-8 JSON message to disk to verify its all OK
-            logger.info("JSON received = " + jsonObject.toString());
+            System.out.println(CerthIndexingBolt.class.getName() + " JSON received = " + jsonObject.toString());
+
+            long id = (long) jsonObject.get("id");
+
+            JSONArray media = (JSONArray) ((JSONObject) jsonObject.get("entities")).get("media");
+
+            boolean indexed = false;
+
+            for (int i = 0; i < media.size(); i++) {
+                JSONObject object = (JSONObject) media.get(i);
+                String url = (String) object.get("media_url");
+                System.out.println(CerthIndexingBolt.class.getName() + " Index item " + id + " with url " + url);
+                indexed = indexer.index(url, String.valueOf(id));
+                System.out.println(CerthIndexingBolt.class.getName() + " Item " + id + " indexed " + indexed);
+            }
+            jsonObject.put("certh:vIndexed", String.valueOf(indexed));
 
             // Emit a received message
-            this.collector.emit(new Values(strMessage));
+            this.collector.emit(new Values(jsonObject.toString()));
 
             // Acknowledge the collector that we actually received the input
             this.collector.ack(input);
 
         } catch (Exception e) {
+            System.out.println(CerthIndexingBolt.class.getName() + " Failed to index. Details: " + e.getMessage());
             e.printStackTrace();
             try {
-                throw new Exception("Failed to parse tuple input. Details: " + e.getMessage());
+                throw new Exception("Failed to index. Details: " + e.getMessage());
             } catch (Exception e1) {
                 e1.printStackTrace();
             }

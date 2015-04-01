@@ -27,7 +27,7 @@ public class VisualTest extends TestCase {
     public void setUp() throws Exception {
         super.setUp();
         Configuration.load("local.properties");
-        VisualIndexer.init();
+        //VisualIndexer.init();
     }
 
     //The test will fail because of a timeout. It takes longer than the hard-coded timeout of 5000ms

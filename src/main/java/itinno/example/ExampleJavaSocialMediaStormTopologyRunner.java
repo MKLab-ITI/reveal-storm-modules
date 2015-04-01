@@ -78,6 +78,8 @@ import com.rapportive.storm.scheme.SimpleJSONScheme;
 
 
 /**
+ * storm jar reveal-storm-modules.jar itinno.example.ExampleJavaSocialMediaStormTopologyRunner -mode distributed -assessmentid omgtest1 nimbus.host=localhost
+ * <p/>
  * Main Java STORM Runner class
  * <p/>
  * NOTE: There is API documentation (if available) provided in order to help understanding the Storm and its configurations/processes, but the API documentation
@@ -177,8 +179,14 @@ public class ExampleJavaSocialMediaStormTopologyRunner {
         int nRabbitMQPrefetch = 0;
         int nMaxSpoutPending = 0;
 
+        // Visual indexing parameters
+        String visualLearningFiles = null;
+        String visualServiceHost = null;
+
         // Main Storm Social Media Properties file
         File fileConfigFile = null;
+
+        String assessmentId = null;
 
         // Create Properties builder object (e.g. storm properties file should be passed as a command line argument)
         Properties properties = new Properties();
@@ -193,18 +201,19 @@ public class ExampleJavaSocialMediaStormTopologyRunner {
 			/* First of all need to check the number of command line arguments (minimum number of arguments should be 4) e.g.
              * -config configuration_file.ini and -mode local/distributed (total count of the arguments is 4)
 			 */
-            if (nArgsLength < 3) {
+            if (nArgsLength < 4) {
                 throw new IllegalArgumentException("Some of the configuration command line arguments were invalid or were not specified. Please refer to the Storm help menu.");
             }
 
 			/* If Storm mode argument was specified, then check if local or distributed mode was requested
-			 * 	- First of all need to check if the command line argument contained "=" character (e.g. mode=local),
+             * 	- First of all need to check if the command line argument contained "=" character (e.g. mode=local),
 			 * 	- Secondly need to check if a valid mode was specified. Valid modes are "local" or "distributed" 
 			 */
             int argsLenght = args.length;
             String[] arguments = new String[argsLenght];
 
             boolean bModeArgument = false;
+            boolean assessmentArgument = false;
 
             for (int i = 0; i < arguments.length; i++) {
 
@@ -212,9 +221,9 @@ public class ExampleJavaSocialMediaStormTopologyRunner {
                 if (args[i].equals("-mode")) {
                     // Set boolean flag indicating that the "-mode" command line argument was specified
                     bModeArgument = true;
-					
+
 					/* Check the length of the mode (minimum length is 5, e.g. local), as well as check if the mode description string 
-					 * equals to either "local" or "distributed"
+                     * equals to either "local" or "distributed"
 					 */
                     String strTempMode = args[++i];
 
@@ -234,9 +243,18 @@ public class ExampleJavaSocialMediaStormTopologyRunner {
                         throw new IllegalArgumentException("Storm cluster mode is invalid or was not specified. Please refer to general Storm help instructions.");
                     }
                 }
+                if (args[i].equals("-assessmentid")) {
+
+                    assessmentArgument = true;
+                    assessmentId = args[++i];
+
+                    if (assessmentId.length() <= 5) {
+                        throw new IllegalArgumentException("The assessment id has to be longer than 5 chars");
+                    }
+                }
             }
 
-            if (bModeArgument == false) {
+            if (bModeArgument == false || assessmentArgument == false) {
                 throw new IllegalArgumentException("Main Storm mode was not specified. Please refer to general Storm help instructions.");
             }
 
@@ -292,6 +310,9 @@ public class ExampleJavaSocialMediaStormTopologyRunner {
             bSpoutDebug = Boolean.valueOf(properties.getProperty("spout_debug", "false"));
             nRabbitMQPrefetch = Integer.parseInt(properties.getProperty("spout_rmqprefetch", "200"));
             nMaxSpoutPending = Integer.parseInt(properties.getProperty("spout_max_spout_pending", "200"));
+
+            visualLearningFiles = properties.getProperty("visual_learning_files");
+            visualServiceHost = properties.getProperty("visual_service_host", "127.0.0.1");
 
         } catch (Exception e) {
             // Print error message, stacktrace and exit
@@ -433,7 +454,7 @@ public class ExampleJavaSocialMediaStormTopologyRunner {
             spoutDeclarer.setDebug(bSpoutDebug);
 
             // Set Java Logger. At the moment the Bolt has one worker only
-            indexingBolt = new CerthIndexingBolt(strExampleEmitFieldsId, strLogBaseDir, strLogPatternJava, logLevel);
+            indexingBolt = new CerthIndexingBolt(strExampleEmitFieldsId, assessmentId, visualLearningFiles, visualServiceHost);
 			
 			/* Define bolt declarer
 			 * API: http://nathanmarz.github.io/storm/doc-0.8.1/index.html (search for "BoltDeclarer")
