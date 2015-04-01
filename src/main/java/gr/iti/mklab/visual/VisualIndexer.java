@@ -10,15 +10,11 @@ import gr.iti.mklab.visual.extraction.AbstractFeatureExtractor;
 import gr.iti.mklab.visual.extraction.SURFExtractor;
 import gr.iti.mklab.visual.vectorization.ImageVectorization;
 import gr.iti.mklab.visual.vectorization.ImageVectorizationResult;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
+import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.StatusLine;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,20 +33,28 @@ public class VisualIndexer {
     protected static int maxNumPixels = 768 * 512;
     protected static int targetLengthMax = 1024;
     private static PCA pca;
-    private static CloseableHttpClient _httpclient;
-    private static RequestConfig _requestConfig;
+    private static HttpClient _httpclient;
+    //private static RequestConfig _requestConfig;
     private static Logger _logger = LoggerFactory.getLogger(VisualIndexer.class);
 
     public static void init() throws Exception {
 
-        _requestConfig = RequestConfig.custom()
+        MultiThreadedHttpConnectionManager connectionManager =
+                new MultiThreadedHttpConnectionManager();
+        HttpConnectionManagerParams connectionManagerParams=connectionManager.getParams();
+        connectionManagerParams.setMaxTotalConnections(10);
+        connectionManagerParams.setDefaultMaxConnectionsPerHost(10);
+        connectionManagerParams.setConnectionTimeout(45000);
+        connectionManagerParams.setSoTimeout(45000);
+        _httpclient = new HttpClient(connectionManager);
+        /*_requestConfig = RequestConfig.custom()
                 .setSocketTimeout(45000)
                 .setConnectTimeout(45000)
                 .build();
         PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager();
         _httpclient = HttpClients.custom()
                 .setConnectionManager(cm)
-                .build();
+                .build();*/
         int[] numCentroids = {128, 128, 128, 128};
         int initialLength = numCentroids.length * numCentroids[0] * AbstractFeatureExtractor.SURFLength;
 
@@ -89,25 +93,17 @@ public class VisualIndexer {
         boolean indexed = false;
         if (handler == null)
             throw new IllegalStateException("There is no index for the collection " + collection);
-        HttpGet httpget = null;
+        GetMethod httpget = null;
         try {
-            httpget = new HttpGet(url.replaceAll(" ", "%20"));
-            httpget.setConfig(_requestConfig);
-            HttpResponse response = _httpclient.execute(httpget);
-            StatusLine status = response.getStatusLine();
-            int code = status.getStatusCode();
+            httpget = new GetMethod(url.replaceAll(" ", "%20"));
+            //httpget.setConfig(_requestConfig);
+            int code = _httpclient.executeMethod(httpget);
             if (code < 200 || code >= 300) {
                 _logger.error("Failed fetch media item " + id + ". URL=" + url +
-                        ". Http code: " + code + " Error: " + status.getReasonPhrase());
+                        ". Http code: " + code + " Error: " + code);
                 return indexed;
             }
-            HttpEntity entity = response.getEntity();
-            if (entity == null) {
-                _logger.error("Entity is null for " + id + ". URL=" + url +
-                        ". Http code: " + code + " Error: " + status.getReasonPhrase());
-                return indexed;
-            }
-            InputStream input = entity.getContent();
+            InputStream input = httpget.getResponseBodyAsStream();
             byte[] imageContent = IOUtils.toByteArray(input);
             BufferedImage image = ImageIO.read(new ByteArrayInputStream(imageContent));
             if (image != null) {
@@ -132,20 +128,17 @@ public class VisualIndexer {
 
     public boolean createCollection(String name) throws Exception {
         String request = "http://" + Configuration.INDEX_SERVICE_HOST + ":8080/VisualIndexService/rest/visual/add/" + name;
-        HttpGet httpget = new HttpGet(request.replaceAll(" ", "%20"));
-        httpget.setConfig(_requestConfig);
-        HttpResponse response = _httpclient.execute(httpget);
-        StatusLine status = response.getStatusLine();
-        int code = status.getStatusCode();
+        GetMethod httpget = new GetMethod(request.replaceAll(" ", "%20"));
+        int code = _httpclient.executeMethod(httpget);
         if (code < 200 || code >= 300) {
             _logger.error("Failed create collection with name " + name +
-                    ". Http code: " + code + " Error: " + status.getReasonPhrase());
+                    ". Http code: " + code + " Error: ");
             return false;
         }
-        HttpEntity entity = response.getEntity();
+        String entity = httpget.getResponseBodyAsString();
         if (entity == null) {
             _logger.error("Entity is null for create collection " + name +
-                    ". Http code: " + code + " Error: " + status.getReasonPhrase());
+                    ". Http code: " + code + " Error: " );
             return false;
         }
         return true;
@@ -155,27 +148,17 @@ public class VisualIndexer {
         List<JsonResultSet.JsonResult> results = new ArrayList<>();
         if (handler == null)
             throw new IllegalStateException("There is no index for the collection " + collection);
-        HttpGet httpget = null;
+        GetMethod httpget = null;
         try {
-            httpget = new HttpGet(url.replaceAll(" ", "%20"));
-            httpget.setConfig(_requestConfig);
-            HttpResponse response = _httpclient.execute(httpget);
-            StatusLine status = response.getStatusLine();
-            int code = status.getStatusCode();
+            httpget = new GetMethod(url.replaceAll(" ", "%20"));
+            int code = _httpclient.executeMethod(httpget);
             if (code < 200 || code >= 300) {
                 _logger.error("Failed fetch media item " + url + ". URL=" + url +
-                        ". Http code: " + code + " Error: " + status.getReasonPhrase());
+                        ". Http code: " + code + " Error: " );
                 throw new IllegalStateException("Failed fetch media item " + url + ". URL=" + url +
-                        ". Http code: " + code + " Error: " + status.getReasonPhrase());
+                        ". Http code: " + code + " Error: " );
             }
-            HttpEntity entity = response.getEntity();
-            if (entity == null) {
-                _logger.error("Entity is null for " + url + ". URL=" + url +
-                        ". Http code: " + code + " Error: " + status.getReasonPhrase());
-                throw new IllegalStateException("Entity is null for " + url + ". URL=" + url +
-                        ". Http code: " + code + " Error: " + status.getReasonPhrase());
-            }
-            InputStream input = entity.getContent();
+            InputStream input = httpget.getResponseBodyAsStream();
             byte[] imageContent = IOUtils.toByteArray(input);
             BufferedImage image = ImageIO.read(new ByteArrayInputStream(imageContent));
             if (image != null) {

@@ -37,6 +37,10 @@ import java.util.Properties;
 
 
 // Import slf4j logger and logback logger level
+import gr.iti.mklab.bolts.CerthIndexingBolt;
+import gr.iti.mklab.bolts.IndexingBolt;
+import gr.iti.mklab.conf.Configuration;
+import gr.iti.mklab.visual.VisualIndexer;
 import org.slf4j.Logger;
 
 import ch.qos.logback.classic.Level;
@@ -102,7 +106,9 @@ public class ExampleJavaSocialMediaStormTopologyRunner {
             + "\n - Windows and Unix OS commands: ant -f build.xml example-client-python"
             + "\n\n";
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
+        //Configuration.load("local.properties");
+        //VisualIndexer.init();
         // Local topology cluster
         LocalCluster clusterLocalTopology;
 
@@ -115,7 +121,7 @@ public class ExampleJavaSocialMediaStormTopologyRunner {
 
         // Storm bolts
         BoltDeclarer boltDeclarer;
-        ExampleSocialMediaJavaLoggerBolt exampleSocialMediaJavaLoggerBolt;
+        CerthIndexingBolt indexingBolt;
         ExampleSocialMediaJavaPrinterBolt exampleSocialMediaJavaPrinterBolt;
 
         // Customer configuration
@@ -159,7 +165,7 @@ public class ExampleJavaSocialMediaStormTopologyRunner {
         // Storm Topology, Spout and Bolts IDs variables
         String strExampleSocialMediaAMQPSpoutId = null;
         String strExampleSocialMediaPrinterBoltId = null;
-        String strExampleSocialMediaLoggerBoltId = null;
+        String strIndexingBoltId = null;
         String strExampleSocialMediaClientFrameworkStreamId = null;
         String strExampleEmitFieldsId = null;
 
@@ -190,7 +196,7 @@ public class ExampleJavaSocialMediaStormTopologyRunner {
             if (nArgsLength < 3) {
                 throw new IllegalArgumentException("Some of the configuration command line arguments were invalid or were not specified. Please refer to the Storm help menu.");
             }
-			
+
 			/* If Storm mode argument was specified, then check if local or distributed mode was requested
 			 * 	- First of all need to check if the command line argument contained "=" character (e.g. mode=local),
 			 * 	- Secondly need to check if a valid mode was specified. Valid modes are "local" or "distributed" 
@@ -270,7 +276,7 @@ public class ExampleJavaSocialMediaStormTopologyRunner {
             // Get all the needed Storm Topology, Spout and Bolts IDs from the configuration file
             strExampleSocialMediaAMQPSpoutId = properties.getProperty("example_spout_amqp_spout_id", "exampleSocialMediaAMQPSpout");
             strExampleSocialMediaPrinterBoltId = properties.getProperty("example_bolt_java_printer_bolt_id", "exampleJavaPrinterBolt");
-            strExampleSocialMediaLoggerBoltId = properties.getProperty("example_bolt_java_logger_bolt_id", "exampleJavaLoggerBolt");
+            strIndexingBoltId = properties.getProperty("indexing_bolt_id", "indexingBolt");
             strExampleSocialMediaClientFrameworkStreamId = properties.getProperty("example_java_storm_topology_id", "exampleJavaStormTopology");
             strExampleEmitFieldsId = properties.getProperty("example_emit_fields_id", "word");
 
@@ -427,22 +433,21 @@ public class ExampleJavaSocialMediaStormTopologyRunner {
             spoutDeclarer.setDebug(bSpoutDebug);
 
             // Set Java Logger. At the moment the Bolt has one worker only
-            exampleSocialMediaJavaLoggerBolt = new ExampleSocialMediaJavaLoggerBolt(strExampleEmitFieldsId,
-                    strLogBaseDir, strLogPatternJava, logLevel);
+            indexingBolt = new CerthIndexingBolt(strExampleEmitFieldsId, strLogBaseDir, strLogPatternJava, logLevel);
 			
 			/* Define bolt declarer
 			 * API: http://nathanmarz.github.io/storm/doc-0.8.1/index.html (search for "BoltDeclarer")
 			 */
-            boltDeclarer = builder.setBolt(strExampleSocialMediaLoggerBoltId, exampleSocialMediaJavaLoggerBolt);
+            boltDeclarer = builder.setBolt(strIndexingBoltId, indexingBolt);
             boltDeclarer.shuffleGrouping(strExampleSocialMediaAMQPSpoutId);
-            logger.info("Declared Logger Bolt to the example Storm topology.");
+            logger.info("Declared Indexing Bolt to the example Storm topology.");
 
             // Set Java Printer bolt. At the moment the Bolt has one worker only
             exampleSocialMediaJavaPrinterBolt = new ExampleSocialMediaJavaPrinterBolt();
 
             // Declare fields grouping - simply saying that input should be received from the Bolt with ID=strExampleSocialMediaLoggerBoltId (e.g. Python Logger Bolt in this case)
             boltDeclarer = builder.setBolt(strExampleSocialMediaPrinterBoltId, exampleSocialMediaJavaPrinterBolt);
-            boltDeclarer.fieldsGrouping(strExampleSocialMediaLoggerBoltId, new Fields(strExampleEmitFieldsId));
+            boltDeclarer.fieldsGrouping(strIndexingBoltId, new Fields(strExampleEmitFieldsId));
             logger.info("Declared Printer Bolt to the example Storm topology.");
 
             // Check configuration boolean value "bLocalTopology" and decide whether to start Local Topology cluster or submit the Topology to the distributed cluster

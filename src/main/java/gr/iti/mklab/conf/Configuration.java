@@ -12,9 +12,9 @@ import org.apache.commons.configuration.PropertiesConfiguration;
  */
 public class Configuration {
 
-    public static String LEARNING_FOLDER;
-    public static String INDEX_SERVICE_HOST;
-    public static String MONGO_HOST;
+    public static String LEARNING_FOLDER = "/home/kandreadou/webservice/learning_files/";
+    public static String INDEX_SERVICE_HOST = "127.0.0.1";
+    public static String MONGO_HOST= "127.0.0.1";
 
     public static void load(String file) throws ConfigurationException {
         PropertiesConfiguration conf = new PropertiesConfiguration(file);

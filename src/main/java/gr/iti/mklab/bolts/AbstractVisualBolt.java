@@ -6,12 +6,16 @@ import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
+import backtype.storm.tuple.Values;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import gr.iti.mklab.conf.FieldNames;
 import gr.iti.mklab.visual.VisualIndexer;
+import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 import static backtype.storm.utils.Utils.tuple;
@@ -36,7 +40,7 @@ public abstract class AbstractVisualBolt extends BaseRichBolt {
 
         this.outputCollector = outputCollector;
         try {
-            indexer = new VisualIndexer(name);
+            //indexer = new VisualIndexer(name);
         } catch (Exception e) {
             getLogger().error("Problem creating indexing bolt " + e);
         }
