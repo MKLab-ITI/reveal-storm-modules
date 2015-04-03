@@ -37,10 +37,12 @@ public class VisualIndexer {
     //private static Logger _logger = LoggerFactory.getLogger(VisualIndexer.class);
     private static String LEARNING_FOLDER;
     private static String INDEX_SERVICE_HOST;
+    private static Logger _logger = null;
 
-    public static void init(String learningFiles, String serviceHost) throws Exception {
+    public static void init(String learningFiles, String serviceHost, Logger logger) throws Exception {
 
-        System.out.println(VisualIndexer.class.getName()+" initialize "+learningFiles+" "+serviceHost);
+        _logger = logger;
+        _logger.info(VisualIndexer.class.getName()+" initialize "+learningFiles+" "+serviceHost);
         LEARNING_FOLDER = learningFiles;
         INDEX_SERVICE_HOST = serviceHost;
         MultiThreadedHttpConnectionManager connectionManager =
@@ -77,7 +79,7 @@ public class VisualIndexer {
                 AbstractFeatureExtractor.SURFLength);
         ImageVectorization.setVladAggregator(new VladAggregatorMultipleVocabularies(codebooks));
         if (targetLengthMax < initialLength) {
-            System.out.println("targetLengthMax : " + targetLengthMax + " initialLengh " + initialLength);
+            _logger.info("targetLengthMax : " + targetLengthMax + " initialLengh " + initialLength);
             pca = new PCA(targetLengthMax, 1, initialLength, true);
             pca.loadPCAFromFile(pcaFile);
             ImageVectorization.setPcaProjector(pca);

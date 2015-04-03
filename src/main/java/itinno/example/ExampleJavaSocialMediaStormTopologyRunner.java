@@ -80,6 +80,9 @@ import com.rapportive.storm.scheme.SimpleJSONScheme;
 /**
  * storm jar reveal-storm-modules.jar itinno.example.ExampleJavaSocialMediaStormTopologyRunner -mode distributed -assessmentid omgtest1 nimbus.host=localhost
  * <p/>
+ * storm jar reveal-storm-modules.jar itinno.example.ExampleJavaSocialMediaStormTopologyRunner stormTopology -mode distributed -assessmentid TEST567 -c nimbus.host=172.17.0.12 -c nimbus.thirf.port=6627
+ * <p/>
+ * <p/>
  * Main Java STORM Runner class
  * <p/>
  * NOTE: There is API documentation (if available) provided in order to help understanding the Storm and its configurations/processes, but the API documentation
@@ -324,7 +327,7 @@ public class ExampleJavaSocialMediaStormTopologyRunner {
         // Try to setup main Java Storm Topology runner logger
         try {
             StormLoggingHelper stormLoggingHelper = new StormLoggingHelper();
-			
+
 			/* Check log level that was specified in the main example Storm configuration file, and based on that specify logging level to StormLoggingHelper
 			 * Available log levels are: all, trace, debug, info, warn, error and off (not used here)
 			 */
@@ -454,7 +457,7 @@ public class ExampleJavaSocialMediaStormTopologyRunner {
             spoutDeclarer.setDebug(bSpoutDebug);
 
             // Set Java Logger. At the moment the Bolt has one worker only
-            indexingBolt = new CerthIndexingBolt(strExampleEmitFieldsId, assessmentId, visualLearningFiles, visualServiceHost);
+            indexingBolt = new CerthIndexingBolt(strExampleEmitFieldsId, assessmentId, visualLearningFiles, visualServiceHost, strLogBaseDir, strLogPatternJava, logLevel);
 			
 			/* Define bolt declarer
 			 * API: http://nathanmarz.github.io/storm/doc-0.8.1/index.html (search for "BoltDeclarer")
@@ -494,4 +497,5 @@ public class ExampleJavaSocialMediaStormTopologyRunner {
             System.exit(1);
         }
     }
+
 }
