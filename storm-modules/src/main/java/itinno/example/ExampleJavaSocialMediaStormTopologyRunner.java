@@ -80,7 +80,8 @@ import com.rapportive.storm.scheme.SimpleJSONScheme;
 
 
 /**
- * storm jar reveal-storm-modules.jar itinno.example.ExampleJavaSocialMediaStormTopologyRunner -mode distributed -assessmentid omgtest1 nimbus.host=localhost
+ * storm jar reveal-storm-modules.jar itinno.example.ExampleJavaSocialMediaStormTopologyRunner
+ * -mode distributed -assessmentid omgtest1 -type sim -threshold 0.9
  * <p/>
  * storm jar reveal-storm-modules.jar itinno.example.ExampleJavaSocialMediaStormTopologyRunner stormTopology -mode distributed -assessmentid TEST567 -c nimbus.host=172.17.0.12 -c nimbus.thirf.port=6627
  * <p/>
@@ -93,29 +94,9 @@ import com.rapportive.storm.scheme.SimpleJSONScheme;
  * Main STORM API (v.0.8.1): http://nathanmarz.github.io/storm/doc-0.8.1/index.html (unfortunately there is not direct link to specific APIs)
  */
 public class ExampleJavaSocialMediaStormTopologyRunner {
-    // General (brief) help instructions on how to start Java/Python storm and corresponding unit tests
-    private static String strStormRunInstructions = "\n\n\nGeneral example Storm help instructions:"
-            + "\n--------------------\n"
-            + "\n\nDeploy example Storm topology"
-            + "\n--------------------"
-            + "\nDeploy example Java Storm topology (example Storm topology with Java bolts only):"
-            + "\n - Windows OS command: ant -f build.xml example-storm-java -propertyfile=\"storm.properties\""
-            + "\n - Unix OS command:    ant -f build.xml example-storm-java -propertyfile storm.properties"
-            + "\n\nDeploy example Python Storm topology (example Storm topology with Java and Python bolts):"
-            + "\n - Windows OS command: ant -f build.xml example-storm-python -propertyfile=\"storm.properties\""
-            + "\n - Unix OS command:    ant -f build.xml example-storm-python -propertyfile storm.properties"
-            + "\n\n\nUnit tests (send example message containing json object to the rabbitmq)"
-            + "\n--------------------"
-            + "\nUnit test using java client:"
-            + "\n - Windows OS command: ant -f build.xml example-client-java -propertyfile=\"storm.properties\""
-            + "\n - Unix OS command:    ant -f build.xml example-client-java -propertyfile storm.properties"
-            + "\n\nUnit test using python client:"
-            + "\n - Windows and Unix OS commands: ant -f build.xml example-client-python"
-            + "\n\n";
+
 
     public static void main(String[] args) throws Exception {
-        //Configuration.load("local.properties");
-        //VisualIndexer.init();
         // Local topology cluster
         LocalCluster clusterLocalTopology;
 
@@ -282,14 +263,13 @@ public class ExampleJavaSocialMediaStormTopologyRunner {
             // Print error message, stacktrace and exit
             System.err.printf(e.getMessage());
             e.printStackTrace();
-            System.out.println(strStormRunInstructions);
             System.exit(1);
 
         } catch (Exception e) {
             // Print error message, stacktrace and exit
             System.err.printf("Exception occurred during configuration file loading. "
-                    + "\n\nDetails: %s.", e.getMessage()
-                    + strStormRunInstructions);
+                            + "\n\nDetails: %s.", e.getMessage()
+            );
             e.printStackTrace();
             System.exit(1);
         }
@@ -410,9 +390,9 @@ public class ExampleJavaSocialMediaStormTopologyRunner {
             stormSocialMediaSpoutRabbitMQconnectionConfig = new ConnectionConfig(strRMQHost, nRMQPort, strRMQUsername, strRMQPassword,
                     ConnectionFactory.DEFAULT_VHOST, nRMQHeartBeaat);
             logger.info("Initialised RabbitMQ connection configuration object.");
-			
+
 			/* Create Storm Spout configuration builder
-			 * Documentation (no API, just an example of usage): https://github.com/ppat/storm-rabbitmq/blob/master/README.md (search for "RabbitMQ Spout")
+             * Documentation (no API, just an example of usage): https://github.com/ppat/storm-rabbitmq/blob/master/README.md (search for "RabbitMQ Spout")
 			 */
             stormSocialMediaSpoutConfigBuilder = new ConsumerConfigBuilder();
             stormSocialMediaSpoutConfigBuilder.connection(stormSocialMediaSpoutRabbitMQconnectionConfig);
@@ -420,7 +400,7 @@ public class ExampleJavaSocialMediaStormTopologyRunner {
             stormSocialMediaSpoutConfigBuilder.prefetch(nRabbitMQPrefetch);
             stormSocialMediaSpoutConfigBuilder.requeueOnFail();
             logger.info("Initialised Spout configuration builder.");
-			
+
 			/* Build Storm spout configuration
 			 * Documentation (no API, just an example of usage): https://github.com/ppat/storm-rabbitmq/blob/master/README.md (search for "RabbitMQ Spout")
 			 */
