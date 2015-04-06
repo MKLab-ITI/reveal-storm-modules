@@ -236,10 +236,6 @@ public class ExampleJavaSocialMediaStormTopologyRunner {
 
                     assessmentArgument = true;
                     assessmentId = args[++i];
-
-                    if (assessmentId.length() <= 5) {
-                        throw new IllegalArgumentException("The assessment id has to be longer than 5 chars");
-                    }
                 }
                 if (args[i].equals("-type")) {
                     typeArgument = true;
