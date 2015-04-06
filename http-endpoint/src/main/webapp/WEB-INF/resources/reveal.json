@@ -1,0 +1,111 @@
+{ "swagger": 2.0,
+    "info": {
+        "description": "Certh storm modules HTTP endpoint",
+        "version": "1.0.0",
+        "title": "Reveal",
+        "termsOfService": "http://revealproject.eu/",
+        "contact": {
+            "name": "kandreadou@iti.gr"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        }
+    },
+    "host": "localhost:8080/reveal",
+    "basePath": "/certh-controller",
+    "paths": {
+        "/assessment/{id}/add": {
+            "get": {
+                "tags": [
+                    "assessment"
+                ],
+                "summary": "Adds assessment with the specified id, which creates a topology",
+                "description": "",
+                "operationId": "assessment",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "description": "The assessment id",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "query",
+                        "name": "type",
+                        "description": "The bolt type, must be either sim (similarity) or ind (indexing) ",
+                        "required": true,
+                        "defaultValue": "ind",
+                        "type": "string"
+                    },
+                    {
+                        "in": "query",
+                        "name": "threshold",
+                        "description": "The similarity threshold",
+                        "defaultValue": "0.9",
+                        "required": false,
+                        "type": "string"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/CrawlRequest"
+                        }
+                    },
+                    "405": {
+                        "description": "Invalid input"
+                    }
+                }
+            }
+        },
+        "/assessment/{id}/remove": {
+            "get": {
+                "tags": [
+                    "assessment"
+                ],
+                "summary": "Removes assessment with the specified id, which kills the topology",
+                "description": "",
+                "operationId": "assessment",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "description": "The assessment id",
+                        "required": true,
+                        "type": "string"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/CrawlRequest"
+                        }
+                    },
+                    "405": {
+                        "description": "Invalid input"
+                    }
+                }
+            }
+        }
+
+    },
+    "definitions": {
+
+    }
+}
