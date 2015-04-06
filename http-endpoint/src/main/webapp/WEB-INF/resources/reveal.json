@@ -102,7 +102,73 @@
                     }
                 }
             }
+        },
+        "/assessment/{id}/status": {
+            "get": {
+                "tags": [
+                    "assessment"
+                ],
+                "summary": "Gets the status of the specified topology",
+                "description": "",
+                "operationId": "assessment",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "description": "The assessment id",
+                        "required": true,
+                        "type": "string"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/CrawlRequest"
+                        }
+                    },
+                    "405": {
+                        "description": "Invalid input"
+                    }
+                }
+            }
+        },
+        "/assessment/status": {
+            "get": {
+                "tags": [
+                    "assessment"
+                ],
+                "summary": "Gets the status of all topologies",
+                "description": "",
+                "operationId": "assessment",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/CrawlRequest"
+                        }
+                    },
+                    "405": {
+                        "description": "Invalid input"
+                    }
+                }
+            }
         }
+
 
     },
     "definitions": {
