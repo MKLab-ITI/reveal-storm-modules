@@ -16,6 +16,7 @@ import java.util.Map;
  * A simple printing bolt
  *
  * @author kandreadou
+ * @deprecated
  */
 public class PrintingBolt extends BaseRichBolt {
 

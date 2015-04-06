@@ -24,6 +24,7 @@ import static backtype.storm.utils.Utils.tuple;
  * An abstract bolt with visual indexing and search capabilities
  *
  * @author kandreadou
+ * @deprecated
  */
 public abstract class AbstractVisualBolt extends BaseRichBolt {
 

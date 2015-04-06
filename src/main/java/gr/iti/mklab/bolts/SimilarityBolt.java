@@ -12,6 +12,7 @@ import java.util.List;
  * The similarity bolt
  *
  * @author kandreadou
+ * @deprecated
  */
 public class SimilarityBolt extends AbstractVisualBolt {
 

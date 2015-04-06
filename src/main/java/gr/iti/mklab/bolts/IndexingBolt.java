@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
  * The indexing bolt
  *
  * @author kandreadou
+ * @deprecated
  */
 public class IndexingBolt extends AbstractVisualBolt {
 

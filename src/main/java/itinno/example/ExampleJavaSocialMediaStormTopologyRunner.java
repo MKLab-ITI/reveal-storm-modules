@@ -38,6 +38,8 @@ import java.util.Properties;
 
 // Import slf4j logger and logback logger level
 import gr.iti.mklab.bolts.CerthIndexingBolt;
+import gr.iti.mklab.bolts.CerthSimilarityBolt;
+import gr.iti.mklab.bolts.CerthVisualBolt;
 import gr.iti.mklab.bolts.IndexingBolt;
 import gr.iti.mklab.conf.Configuration;
 import gr.iti.mklab.visual.VisualIndexer;
@@ -126,7 +128,7 @@ public class ExampleJavaSocialMediaStormTopologyRunner {
 
         // Storm bolts
         BoltDeclarer boltDeclarer;
-        CerthIndexingBolt indexingBolt;
+        CerthVisualBolt visualBolt;
         ExampleSocialMediaJavaPrinterBolt exampleSocialMediaJavaPrinterBolt;
 
         // Customer configuration
@@ -190,6 +192,8 @@ public class ExampleJavaSocialMediaStormTopologyRunner {
         File fileConfigFile = null;
 
         String assessmentId = null;
+        String boltType = null;
+        double threshold = 0;
 
         // Create Properties builder object (e.g. storm properties file should be passed as a command line argument)
         Properties properties = new Properties();
@@ -204,7 +208,7 @@ public class ExampleJavaSocialMediaStormTopologyRunner {
 			/* First of all need to check the number of command line arguments (minimum number of arguments should be 4) e.g.
              * -config configuration_file.ini and -mode local/distributed (total count of the arguments is 4)
 			 */
-            if (nArgsLength < 4) {
+            if (nArgsLength < 6) {
                 throw new IllegalArgumentException("Some of the configuration command line arguments were invalid or were not specified. Please refer to the Storm help menu.");
             }
 
@@ -217,6 +221,7 @@ public class ExampleJavaSocialMediaStormTopologyRunner {
 
             boolean bModeArgument = false;
             boolean assessmentArgument = false;
+            boolean typeArgument = false;
 
             for (int i = 0; i < arguments.length; i++) {
 
@@ -255,9 +260,16 @@ public class ExampleJavaSocialMediaStormTopologyRunner {
                         throw new IllegalArgumentException("The assessment id has to be longer than 5 chars");
                     }
                 }
+                if (args[i].equals("-type")) {
+                    typeArgument = true;
+                    boltType = args[++i];
+                }
+                if (args[i].equals("-threshold")) {
+                    threshold = Double.parseDouble(args[++i]);
+                }
             }
 
-            if (bModeArgument == false || assessmentArgument == false) {
+            if (bModeArgument == false || assessmentArgument == false || typeArgument == false) {
                 throw new IllegalArgumentException("Main Storm mode was not specified. Please refer to general Storm help instructions.");
             }
 
@@ -298,7 +310,7 @@ public class ExampleJavaSocialMediaStormTopologyRunner {
             strExampleSocialMediaAMQPSpoutId = properties.getProperty("example_spout_amqp_spout_id", "exampleSocialMediaAMQPSpout");
             strExampleSocialMediaPrinterBoltId = properties.getProperty("example_bolt_java_printer_bolt_id", "exampleJavaPrinterBolt");
             strIndexingBoltId = properties.getProperty("indexing_bolt_id", "indexingBolt");
-            strExampleSocialMediaClientFrameworkStreamId = properties.getProperty("example_java_storm_topology_id", "exampleJavaStormTopology");
+            strExampleSocialMediaClientFrameworkStreamId = properties.getProperty("certh_topology_id", "certhTopology");
             strExampleEmitFieldsId = properties.getProperty("example_emit_fields_id", "word");
 
             // Get logging configuration
@@ -329,7 +341,7 @@ public class ExampleJavaSocialMediaStormTopologyRunner {
             StormLoggingHelper stormLoggingHelper = new StormLoggingHelper();
 
 			/* Check log level that was specified in the main example Storm configuration file, and based on that specify logging level to StormLoggingHelper
-			 * Available log levels are: all, trace, debug, info, warn, error and off (not used here)
+             * Available log levels are: all, trace, debug, info, warn, error and off (not used here)
 			 */
             if (strLogLevel.toLowerCase().equals("all")) {
                 logLevel = Level.ALL;
@@ -364,7 +376,7 @@ public class ExampleJavaSocialMediaStormTopologyRunner {
             }
 
             // Create log file name - combination of class name and current thread id, e.g. ExampleJavaSocialMediaStormTopologyRunner_pid123.log
-            String strLogName = "ExampleJavaSocialMediaStormTopologyRunner_pid" + strPID + ".log";
+            String strLogName = "CerthTopologyRunner_pid" + strPID + ".log";
 
             // Specify the path to the log file (the file that will be created)
             String fileSep = System.getProperty("file.separator");
@@ -387,13 +399,13 @@ public class ExampleJavaSocialMediaStormTopologyRunner {
         // Create SocialMediaSpout Configuration Builder, create Topology builder, set spouts/bolts and start execute the topology
         try {
             // Create Storm object Scheme (default encoding is utf-8, but others can be passed to the constructor).
-			/* API: http://code.rapportive.com/storm-json/doc/com/rapportive/storm/scheme/SimpleJSONScheme.html
-			 * 
+            /* API: http://code.rapportive.com/storm-json/doc/com/rapportive/storm/scheme/SimpleJSONScheme.html
+             *
 			 */
             socialMediaScheme = new SimpleJSONScheme();
-			
+
 			/* Create RabbitMQ connection configuration
-			 * Documentation (no API, just an example of usage): https://github.com/ppat/storm-rabbitmq/blob/master/README.md (search for "RabbitMQ Spout") 
+             * Documentation (no API, just an example of usage): https://github.com/ppat/storm-rabbitmq/blob/master/README.md (search for "RabbitMQ Spout")
 			 */
             stormSocialMediaSpoutRabbitMQconnectionConfig = new ConnectionConfig(strRMQHost, nRMQPort, strRMQUsername, strRMQPassword,
                     ConnectionFactory.DEFAULT_VHOST, nRMQHeartBeaat);
@@ -456,13 +468,18 @@ public class ExampleJavaSocialMediaStormTopologyRunner {
             spoutDeclarer.setMaxSpoutPending(nMaxSpoutPending);
             spoutDeclarer.setDebug(bSpoutDebug);
 
-            // Set Java Logger. At the moment the Bolt has one worker only
-            indexingBolt = new CerthIndexingBolt(strExampleEmitFieldsId, assessmentId, visualLearningFiles, visualServiceHost, strLogBaseDir, strLogPatternJava, logLevel);
-			
+            if ("sim".equals(boltType)) {
+                if (threshold <= 0)
+                    threshold = 0.9;
+                visualBolt = new CerthSimilarityBolt(strExampleEmitFieldsId, assessmentId, visualLearningFiles, visualServiceHost, strLogBaseDir, strLogPatternJava, logLevel, threshold);
+            } else
+                // Set Java Logger. At the moment the Bolt has one worker only
+                visualBolt = new CerthIndexingBolt(strExampleEmitFieldsId, assessmentId, visualLearningFiles, visualServiceHost, strLogBaseDir, strLogPatternJava, logLevel);
+
 			/* Define bolt declarer
 			 * API: http://nathanmarz.github.io/storm/doc-0.8.1/index.html (search for "BoltDeclarer")
 			 */
-            boltDeclarer = builder.setBolt(strIndexingBoltId, indexingBolt);
+            boltDeclarer = builder.setBolt(strIndexingBoltId, visualBolt);
             boltDeclarer.shuffleGrouping(strExampleSocialMediaAMQPSpoutId);
             logger.info("Declared Indexing Bolt to the example Storm topology.");
 
@@ -482,6 +499,7 @@ public class ExampleJavaSocialMediaStormTopologyRunner {
 
             } else if (strStormClusterMode.equals("distributed")) {
                 // Submit the topology to the distribution cluster that will be defined in Storm client configuration file or via cmd as a parameter ( e.g. nimbus.host=localhost )
+                strExampleSocialMediaClientFrameworkStreamId = assessmentId;
                 StormSubmitter.submitTopology(strExampleSocialMediaClientFrameworkStreamId, conf, builder.createTopology());
                 logger.info("Submitted the example Storm topology.");
 
