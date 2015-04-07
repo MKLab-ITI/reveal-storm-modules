@@ -390,6 +390,11 @@ public class ExampleJavaSocialMediaStormTopologyRunner {
 			/* Create Storm Spout configuration builder
              * Documentation (no API, just an example of usage): https://github.com/ppat/storm-rabbitmq/blob/master/README.md (search for "RabbitMQ Spout")
 			 */
+
+            /* Use the assessment id for the exchange and queue name to be able to have different independent topologies
+            *  With the previous configuration, every topology would listen to all published messages */
+            strRMQExchange = assessmentId+"_exchange";
+            strRMQQueueName = assessmentId+"_queue";
             stormSocialMediaSpoutConfigBuilder = new ConsumerConfigBuilder();
             stormSocialMediaSpoutConfigBuilder.connection(stormSocialMediaSpoutRabbitMQconnectionConfig);
             stormSocialMediaSpoutConfigBuilder.queue(strRMQQueueName);
