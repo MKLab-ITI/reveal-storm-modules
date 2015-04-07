@@ -165,7 +165,7 @@ public class ExampleRabbitmqClient {
 
             // publish message
             /* Exchange name should be {assessment_id}+ "_exchange" */
-            channel.basicPublish("indexing2_exchange", "test-routing", basicProperties.build(), strJSON.getBytes("UTF-8"));
+            channel.basicPublish("indexing_exchange", "test-routing", basicProperties.build(), strJSON.getBytes("UTF-8"));
 
             // close connection and channel
             channel.close();

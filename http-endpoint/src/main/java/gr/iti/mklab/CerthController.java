@@ -22,7 +22,7 @@ public class CerthController {
         try {
             Process ps = Runtime.getRuntime().exec(new String[]{"/opt/apache-storm-0.9.1-incubating/bin/storm",
                     "jar", "/usr/reveal-storm-modules.jar",
-                    "itinno.example.ExampleJavaSocialMediaStormTopologyRunner",
+                    "gr.iti.mklab.runners.CerthTopologyRunner",
                     "-mode", "distributed", "-assessmentid", id, "-type", type, "-threshold", String.valueOf(threshold)});
             ps.waitFor();
             java.io.InputStream is = ps.getInputStream();
