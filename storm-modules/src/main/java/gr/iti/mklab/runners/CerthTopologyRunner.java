@@ -26,6 +26,7 @@ import itinno.example.ExampleSocialMediaStormDeclarator;
 import org.slf4j.Logger;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.lang.management.ManagementFactory;
 import java.util.HashMap;
 import java.util.Map;
@@ -407,8 +408,8 @@ public class CerthTopologyRunner {
             boltDeclarer.shuffleGrouping(strRabbitMQSpout);
             logger.info("Declared Indexing Bolt to the example Storm topology.");
 
-            String outputExchangeName = assessmentId + "ex_out";
-            String outputQueueName = assessmentId + "queue_out";
+            String outputExchangeName = assessmentId + "_ex_out";
+            String outputQueueName = assessmentId + "_queue_out";
             String outputRouting = "certh-out";
 
             ProducerConfig sinkConfig = new ProducerConfigBuilder()
@@ -420,7 +421,7 @@ public class CerthTopologyRunner {
                     .persistent()
                     .build();
 
-            TupleToMessage scheme = new TupleToMessage() {
+            /*TupleToMessage scheme = new TupleToMessage() {
 
                 @Override
                 protected byte[] extractBody(Tuple input) { return ((String) input.getValue(0)).getBytes(); }
@@ -442,31 +443,25 @@ public class CerthTopologyRunner {
 
                 @Override
                 protected boolean specifyMessagePersistence(Tuple input) { return false; }
-            };
-           /* TupleToMessage scheme = new TupleToMessageNonDynamic() {
-                @Override
-                protected void prepare(@SuppressWarnings("rawtypes") Map stormConfig) {
-                    super.prepare(stormConfig);
-                }
+            };*/
+            TupleToMessage scheme = new TupleToMessageNonDynamic() {
 
                 @Override
                 protected byte[] extractBody(Tuple input) {
-                    return ((String) input.getValue(0)).getBytes();
+                    try {
+                        return ((String) input.getValue(0)).getBytes("UTF-8");
+                    }catch(UnsupportedEncodingException uee){
+                        System.out.println("TupleToMessageNonDynamic unsupported encoding UTF-8");
+                        return new byte[0];
+                    }
                 }
-            };*/
-
-
-
+            };
 
             boltDeclarer = builder.setBolt(strRabbitMQSinkBoltId, new RabbitMQBolt(scheme,
                     new ExampleSocialMediaStormDeclarator(outputExchangeName, strRMQExchangeType, outputRouting, outputQueueName)));
             boltDeclarer.shuffleGrouping(strIndexingBoltId);
             boltDeclarer.addConfigurations(sinkConfig.asMap());
             logger.info("Declared Rabbit MQ Sink Bolt to the example Storm topology.");
-
-            /*builder.setBolt("rabbitmq-sink", new RabbitMQBolt(scheme))
-                    .addConfigurations(sinkConfig.asMap())
-                    .shuffleGrouping("previous-bolt");*/
 
             // Check configuration boolean value "bLocalTopology" and decide whether to start Local Topology cluster or submit the Topology to the distributed cluster
             if (strStormClusterMode.equals("local")) {

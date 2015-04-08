@@ -53,7 +53,7 @@ public class RabbitMQBolt extends BaseRichBolt {
     public void execute(final Tuple tuple) {
         logger.info("##### RABBIT MQ BOLT EXECUTE #####");
         logger.info((String) tuple.getValue(0));
-        producer.send(scheme.produceMessage(tuple), "certh-out");
+        producer.send(scheme.produceMessage(tuple));
         // tuples are always acked, even when transformation by scheme yields Message.NONE as
         // if it failed once it's unlikely to succeed when re-attempted (i.e. serialization/deserilization errors).
         collector.ack(tuple);

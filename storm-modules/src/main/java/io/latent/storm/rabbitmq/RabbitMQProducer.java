@@ -33,9 +33,7 @@ public class RabbitMQProducer implements Serializable {
 
     public void send(Message message,
                      String routingKey) {
-        logger.info("send message");
         if (message == Message.NONE) {
-            logger.info("message is none");
             return;
         }
         reinitIfNecessary();
@@ -46,9 +44,6 @@ public class RabbitMQProducer implements Serializable {
                     .contentEncoding(producerConfig.getContentEncoding())
                     .deliveryMode((producerConfig.isPersistent()) ? 2 : 1)
                     .build();
-            logger.info("channel before publish "+new String(message.getBody()));
-            logger.info("rootingkey "+routingKey);
-            logger.info("exchange name  "+producerConfig.getExchangeName());
             channel.basicPublish(producerConfig.getExchangeName(), routingKey, properties, message.getBody());
         } catch (AlreadyClosedException ace) {
             logger.error("already closed exception while attempting to send message", ace);
