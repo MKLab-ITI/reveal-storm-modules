@@ -13,6 +13,7 @@ import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
+import org.apache.commons.httpclient.params.HttpMethodParams;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 
@@ -49,8 +50,8 @@ public class VisualIndexer {
         HttpConnectionManagerParams connectionManagerParams=connectionManager.getParams();
         connectionManagerParams.setMaxTotalConnections(10);
         connectionManagerParams.setDefaultMaxConnectionsPerHost(10);
-        connectionManagerParams.setConnectionTimeout(45000);
-        connectionManagerParams.setSoTimeout(45000);
+        connectionManagerParams.setConnectionTimeout(120000);
+        connectionManagerParams.setSoTimeout(120000);
         _httpclient = new HttpClient(connectionManager);
         /*_requestConfig = RequestConfig.custom()
                 .setSocketTimeout(45000)
@@ -101,6 +102,9 @@ public class VisualIndexer {
         GetMethod httpget = null;
         try {
             httpget = new GetMethod(url.replaceAll(" ", "%20"));
+            HttpMethodParams pars=httpget.getParams();
+            pars.setSoTimeout(180000);
+            httpget.setParams(pars);
             //httpget.setConfig(_requestConfig);
             int code = _httpclient.executeMethod(httpget);
             if (code < 200 || code >= 300) {

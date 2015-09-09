@@ -7,6 +7,7 @@
     <groupId>gr.iti.mklab</groupId>
     <artifactId>reveal-storm-modules</artifactId>
     <version>1.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
 
     <name>reveal-storm-modules</name>
     <url>https://github.com/MKLab-ITI/reveal-storm-modules.git</url>
